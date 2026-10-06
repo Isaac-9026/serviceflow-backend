@@ -8,6 +8,7 @@ import com.serviceflow.identidad.entity.Usuario;
 import com.serviceflow.identidad.repository.PerfilTecnicoRepository;
 import com.serviceflow.identidad.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final PerfilTecnicoRepository perfilTecnicoRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public List<Usuario> obtenerTodos() {
@@ -38,6 +40,7 @@ public class UsuarioService {
         }
         
         usuario.setActivo(true);
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         Usuario usuarioGuardado = usuarioRepository.save(usuario);
         
         // Si es tecnico... debe tener un perfil tecnico asociado.

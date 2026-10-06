@@ -1,0 +1,36 @@
+### 1. Iniciar sesión (Obtener JWT)
+# Usa el usuario semilla (admin) configurado en la base de datos
+# La contraseña para este hash es "password123"
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@serviceflow.com",
+  "password": "password123"
+}
+
+> {%
+    // IntelliJ HTTP Client script para guardar el token
+    client.global.set("auth_token", response.body.token);
+    client.log("Token guardado: " + client.global.get("auth_token"));
+%}
+
+### 2. Intentar ver categorías SIN token (Debe fallar con 403 Forbidden)
+GET http://localhost:8080/api/categorias
+
+### 3. Ver categorías CON token (Debe funcionar - 200 OK)
+GET http://localhost:8080/api/categorias
+Authorization: Bearer {{auth_token}}
+
+### 4. Crear un usuario desde el ADMIN (Debe funcionar - 201 Created)
+POST http://localhost:8080/api/usuarios
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "email": "tecnico@serviceflow.com",
+  "password": "tecnicoPassword123",
+  "nombre": "Juan",
+  "apellido": "Pérez",
+  "rol": "TECNICO"
+}
