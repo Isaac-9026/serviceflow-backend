@@ -35,3 +35,8 @@ build/
 ### Documentación Interna ###
 *.md
 docs/
+
+### Pruebas ###
+src/test/
+*.http
+

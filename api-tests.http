@@ -1,36 +1,81 @@
 ### 1. Iniciar sesión (Obtener JWT)
 # Usa el usuario semilla (admin) configurado en la base de datos
-# La contraseña para este hash es "password123"
+# La contraseña para este hash es "admin123" según V4__fix_admin_password.sql
 POST http://localhost:8080/api/auth/login
 Content-Type: application/json
 
 {
   "email": "admin@serviceflow.com",
-  "password": "password123"
+  "password": "admin123"
 }
 
 > {%
-    // IntelliJ HTTP Client script para guardar el token
+    // IntelliJ/VSCode HTTP Client script para guardar el token
     client.global.set("auth_token", response.body.token);
     client.log("Token guardado: " + client.global.get("auth_token"));
 %}
 
-### 2. Intentar ver categorías SIN token (Debe fallar con 403 Forbidden)
-GET http://localhost:8080/api/categorias
-
-### 3. Ver categorías CON token (Debe funcionar - 200 OK)
-GET http://localhost:8080/api/categorias
-Authorization: Bearer {{auth_token}}
-
-### 4. Crear un usuario desde el ADMIN (Debe funcionar - 201 Created)
-POST http://localhost:8080/api/usuarios
+### 2. Crear una Categoría de Servicio (Requiere ADMIN)
+POST http://localhost:8080/api/categorias
 Authorization: Bearer {{auth_token}}
 Content-Type: application/json
 
 {
-  "email": "tecnico@serviceflow.com",
-  "password": "tecnicoPassword123",
-  "nombre": "Juan",
-  "apellido": "Pérez",
-  "rol": "TECNICO"
+  "nombre": "Plomería General"
 }
+
+### 3. Crear un Cliente (Requiere ADMIN o COORDINADOR)
+POST http://localhost:8080/api/clientes
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "nombre": "Empresa XYZ",
+  "telefono": "+549112345678",
+  "email": "contacto@empresaxyz.com",
+  "direccion": "Av. Principal 123",
+  "notas": "Cliente corporativo"
+}
+
+### 4. Crear una Solicitud de Servicio
+# Nota: Reemplaza "1" por los IDs reales devueltos en las peticiones anteriores
+POST http://localhost:8080/api/solicitudes
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "clienteId": 1,
+  "categoriaId": 1,
+  "descripcion": "Reparación de tubería principal con fuga de agua",
+  "direccion": "Av. Principal 123 - Planta Baja"
+}
+
+### 5. Cotizar la Solicitud
+POST http://localhost:8080/api/solicitudes/1/cotizaciones
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "descripcion": "Reemplazo de tubería PVC de 2 pulgadas, incluye mano de obra.",
+  "monto": 45000.00,
+  "validoHasta": "2027-12-31"
+}
+
+### 6. Aprobar la Cotización (El Cliente acepta el presupuesto)
+PATCH http://localhost:8080/api/solicitudes/1/cotizaciones/1/aprobar
+Authorization: Bearer {{auth_token}}
+
+### 7. Generar Orden de Trabajo (basada en la Solicitud ya cotizada)
+POST http://localhost:8080/api/ordenes
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "solicitudId": 1,
+  "cotizacionId": 1,
+  "descripcion": "Ejecutar reemplazo de tubería PVC en Planta Baja hoy mismo."
+}
+
+### 8. Listar todas las Órdenes
+GET http://localhost:8080/api/ordenes
+Authorization: Bearer {{auth_token}}
