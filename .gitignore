@@ -44,3 +44,4 @@ src/test/
 
 ### Entorno ###
 .env
+/frontend/

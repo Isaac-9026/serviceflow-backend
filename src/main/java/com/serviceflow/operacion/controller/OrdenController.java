@@ -1,5 +1,6 @@
 package com.serviceflow.operacion.controller;
 
+import com.serviceflow.identidad.dto.UsuarioResponse;
 import com.serviceflow.operacion.dto.*;
 import com.serviceflow.operacion.entity.Evidencia;
 import com.serviceflow.operacion.entity.OrdenTrabajo;
@@ -10,12 +11,29 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/ordenes")
 @RequiredArgsConstructor
 public class OrdenController {
 
     private final OrdenTrabajoService ordenTrabajoService;
+
+    @GetMapping
+    public ResponseEntity<List<OrdenResponse>> listarOrdenes() {
+        List<OrdenTrabajo> ordenes = ordenTrabajoService.listarOrdenes();
+        List<OrdenResponse> response = ordenes.stream()
+                .map(this::mapToResponse)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<OrdenResponse> obtenerPorId(@PathVariable Long id) {
+        OrdenTrabajo orden = ordenTrabajoService.obtenerPorId(id);
+        return ResponseEntity.ok(mapToResponse(orden));
+    }
 
     @PostMapping
     public ResponseEntity<OrdenResponse> crearOrden(@Valid @RequestBody CrearOrdenRequest request) {
@@ -58,6 +76,18 @@ public class OrdenController {
 
     private OrdenResponse mapToResponse(OrdenTrabajo orden) {
         Long cotizacionId = orden.getCotizacion() != null ? orden.getCotizacion().getId() : null;
+        UsuarioResponse tecnicoAsignado = ordenTrabajoService.obtenerTecnicoPrincipal(orden.getId())
+                .map(u -> new UsuarioResponse(
+                        u.getId(),
+                        u.getEmail(),
+                        u.getNombre(),
+                        u.getApellido(),
+                        u.getRol(),
+                        u.getActivo(),
+                        u.getCreadoEn(),
+                        u.getActualizadoEn()
+                ))
+                .orElse(null);
         
         return new OrdenResponse(
                 orden.getId(),
@@ -66,6 +96,7 @@ public class OrdenController {
                 orden.getDescripcion(),
                 orden.getFechaProgramada(),
                 orden.getEstado(),
+                tecnicoAsignado,
                 orden.getCompletadoEn(),
                 orden.getCreadoEn(),
                 orden.getActualizadoEn()

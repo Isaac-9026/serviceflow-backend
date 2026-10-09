@@ -61,11 +61,11 @@ public class SecurityConfig {
                 // Módulo Clientes, Solicitudes, Cotizaciones (ADMIN y COORDINADOR)
                 .requestMatchers("/api/clientes/**").hasAnyRole("ADMIN", "COORDINADOR")
                 .requestMatchers("/api/solicitudes/**").hasAnyRole("ADMIN", "COORDINADOR")
-                .requestMatchers("/api/cotizaciones/**").hasAnyRole("ADMIN", "COORDINADOR")
+                .requestMatchers("/api/cotizaciones", "/api/cotizaciones/**").hasAnyRole("ADMIN", "COORDINADOR")
                 
                 // Módulo Órdenes
                 .requestMatchers(HttpMethod.POST, "/api/ordenes").hasAnyRole("ADMIN", "COORDINADOR")
-                .requestMatchers("/api/ordenes/**").hasAnyRole("ADMIN", "COORDINADOR", "TECNICO")
+                .requestMatchers("/api/ordenes", "/api/ordenes/**").hasAnyRole("ADMIN", "COORDINADOR", "TECNICO")
                 
                 // Cualquier otra petición requerirá autenticación por defecto
                 .anyRequest().authenticated()

@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -109,5 +111,27 @@ public class OrdenTrabajoService {
         solicitudServicioRepository.save(solicitud);
 
         ordenTrabajoRepository.save(orden);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrdenTrabajo> listarOrdenes() {
+        return ordenTrabajoRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public OrdenTrabajo obtenerPorId(Long id) {
+        return ordenTrabajoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Orden de trabajo no encontrada con id: " + id));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Usuario> obtenerTecnicoPrincipal(Long ordenId) {
+        return asignacionOrdenRepository.findByOrdenId(ordenId).stream()
+                .filter(AsignacionOrden::getEsPrincipal)
+                .map(AsignacionOrden::getTecnico)
+                .findFirst()
+                .or(() -> asignacionOrdenRepository.findByOrdenId(ordenId).stream()
+                        .map(AsignacionOrden::getTecnico)
+                        .findFirst());
     }
 }

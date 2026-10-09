@@ -52,4 +52,9 @@ public class CotizacionService {
         
         cotizacionRepository.save(cotizacion);
     }
+
+    @Transactional(readOnly = true)
+    public java.util.List<Cotizacion> listarCotizaciones() {
+        return cotizacionRepository.findAll();
+    }
 }
