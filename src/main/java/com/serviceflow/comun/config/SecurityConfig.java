@@ -47,20 +47,21 @@ public class SecurityConfig {
             // 4. Configurar autorizacion de rutas base según matriz de permisos
             .authorizeHttpRequests(auth -> auth
                 // Rutas públicas
-                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 
                 // Módulo Usuarios y Auditoría (Solo ADMIN)
-                .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
-                .requestMatchers("/api/auditoria/**").hasRole("ADMIN")
+                .requestMatchers("/api/usuarios", "/api/usuarios/**").hasRole("ADMIN")
+                .requestMatchers("/api/auditoria", "/api/auditoria/**").hasRole("ADMIN")
                 
                 // Módulo Categorías (GET para todos, mutación solo ADMIN)
-                .requestMatchers(HttpMethod.GET, "/api/categorias/**").hasAnyRole("ADMIN", "COORDINADOR", "TECNICO")
-                .requestMatchers("/api/categorias/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/categorias", "/api/categorias/**").hasAnyRole("ADMIN", "COORDINADOR", "TECNICO")
+                .requestMatchers("/api/categorias", "/api/categorias/**").hasRole("ADMIN")
                 
                 // Módulo Clientes, Solicitudes, Cotizaciones (ADMIN y COORDINADOR)
-                .requestMatchers("/api/clientes/**").hasAnyRole("ADMIN", "COORDINADOR")
-                .requestMatchers("/api/solicitudes/**").hasAnyRole("ADMIN", "COORDINADOR")
+                .requestMatchers("/api/clientes", "/api/clientes/**").hasAnyRole("ADMIN", "COORDINADOR")
+                .requestMatchers("/api/solicitudes", "/api/solicitudes/**").hasAnyRole("ADMIN", "COORDINADOR")
                 .requestMatchers("/api/cotizaciones", "/api/cotizaciones/**").hasAnyRole("ADMIN", "COORDINADOR")
                 
                 // Módulo Órdenes
@@ -69,6 +70,18 @@ public class SecurityConfig {
                 
                 // Cualquier otra petición requerirá autenticación por defecto
                 .anyRequest().authenticated()
+            )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"status\":401,\"message\":\"Sesión expirada o token no válido\"}");
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"status\":403,\"message\":\"No tienes permisos suficientes para acceder a este recurso\"}");
+                })
             )
             // 5. Añadir nuestro filtro antes del UsernamePasswordAuthenticationFilter
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
