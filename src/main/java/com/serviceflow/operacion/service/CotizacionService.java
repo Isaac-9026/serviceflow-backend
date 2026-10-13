@@ -1,5 +1,6 @@
 package com.serviceflow.operacion.service;
 
+import com.serviceflow.auditoria.service.AuditoriaService;
 import com.serviceflow.comun.exception.BusinessRuleException;
 import com.serviceflow.comun.exception.ResourceNotFoundException;
 import com.serviceflow.operacion.entity.Cotizacion;
@@ -12,14 +13,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-
 @Service
 @RequiredArgsConstructor
 public class CotizacionService {
 
     private final CotizacionRepository cotizacionRepository;
     private final SolicitudServicioRepository solicitudServicioRepository;
+    private final AuditoriaService auditoriaService;
 
     @Transactional
     public Cotizacion crearCotizacion(Long solicitudId, Cotizacion cotizacion) {
@@ -36,7 +36,22 @@ public class CotizacionService {
         solicitud.setEstado(EstadoSolicitud.COTIZADA);
         solicitudServicioRepository.save(solicitud);
 
-        return cotizacionRepository.save(cotizacion);
+        Cotizacion guardada = cotizacionRepository.save(cotizacion);
+
+        auditoriaService.registrar(
+                "COTIZACION", 
+                guardada.getId(), 
+                "CREAR_COTIZACION", 
+                "Cotización registrada con monto S/ " + guardada.getMonto() + " para solicitud #" + solicitudId
+        );
+        auditoriaService.registrar(
+                "SOLICITUD", 
+                solicitud.getId(), 
+                "COTIZAR_SOLICITUD", 
+                "Solicitud cotizada con cotización #" + guardada.getId()
+        );
+
+        return guardada;
     }
 
     @Transactional
@@ -51,6 +66,13 @@ public class CotizacionService {
         cotizacion.setEstado(EstadoCotizacion.APROBADA);
         
         cotizacionRepository.save(cotizacion);
+
+        auditoriaService.registrar(
+                "COTIZACION", 
+                cotizacion.getId(), 
+                "APROBAR_COTIZACION", 
+                "Cotización #" + cotizacion.getId() + " aprobada formalmente"
+        );
     }
 
     @Transactional(readOnly = true)

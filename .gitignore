@@ -45,3 +45,4 @@ src/test/
 ### Entorno ###
 .env
 /frontend/
+uploads/

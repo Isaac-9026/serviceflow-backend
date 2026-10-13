@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 public record RegistroAuditoriaResponse(
         Long id,
         Long usuarioId,
+        String usuarioNombre,
+        String usuarioEmail,
         String accion,
         String tipoEntidad,
         Long entidadId,

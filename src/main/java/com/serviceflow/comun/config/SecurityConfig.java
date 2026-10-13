@@ -49,6 +49,7 @@ public class SecurityConfig {
                 // Rutas públicas
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 
                 // Módulo Usuarios y Auditoría (Solo ADMIN)

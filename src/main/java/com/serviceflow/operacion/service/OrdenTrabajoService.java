@@ -28,6 +28,8 @@ public class OrdenTrabajoService {
     private final AsignacionOrdenRepository asignacionOrdenRepository;
     private final EvidenciaRepository evidenciaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final com.serviceflow.comun.storage.AlmacenamientoService almacenamientoService;
+    private final com.serviceflow.auditoria.service.AuditoriaService auditoriaService;
 
     @Transactional
     public OrdenTrabajo crearOrden(Long solicitudId, Long cotizacionId, String descripcion) {
@@ -59,7 +61,22 @@ public class OrdenTrabajoService {
         solicitud.setEstado(EstadoSolicitud.EN_PROGRESO);
         solicitudServicioRepository.save(solicitud);
 
-        return ordenTrabajoRepository.save(orden);
+        OrdenTrabajo guardada = ordenTrabajoRepository.save(orden);
+
+        auditoriaService.registrar(
+                "ORDEN",
+                guardada.getId(),
+                "CREAR_ORDEN",
+                "Orden de trabajo creada a partir de solicitud #" + solicitudId + (cotizacionId != null ? " con cotización #" + cotizacionId : "")
+        );
+        auditoriaService.registrar(
+                "SOLICITUD",
+                solicitud.getId(),
+                "GENERAR_ORDEN",
+                "Orden de trabajo #" + guardada.getId() + " generada para atención de la solicitud"
+        );
+
+        return guardada;
     }
 
     @Transactional
@@ -81,7 +98,48 @@ public class OrdenTrabajoService {
             ordenTrabajoRepository.save(orden);
         }
 
-        return asignacionOrdenRepository.save(asignacion);
+        AsignacionOrden guardada = asignacionOrdenRepository.save(asignacion);
+
+        auditoriaService.registrar(
+                "ORDEN",
+                orden.getId(),
+                "ASIGNAR_TECNICO",
+                "Técnico " + tecnico.getNombre() + " " + (tecnico.getApellido() != null ? tecnico.getApellido() : "") + " asignado como " + (esPrincipal ? "Principal" : "Secundario")
+        );
+
+        return guardada;
+    }
+
+    @Transactional
+    public Evidencia registrarEvidencia(Long ordenId, TipoEvidencia tipo, String nota, org.springframework.web.multipart.MultipartFile archivo) {
+        OrdenTrabajo orden = ordenTrabajoRepository.findById(ordenId)
+                .orElseThrow(() -> new ResourceNotFoundException("Orden de trabajo no encontrada con id: " + ordenId));
+
+        String ruta = null;
+        if (archivo != null && !archivo.isEmpty()) {
+            ruta = almacenamientoService.guardar(archivo, "evidencias");
+        }
+
+        Evidencia evidencia = new Evidencia();
+        evidencia.setOrden(orden);
+        evidencia.setTipo(tipo);
+        evidencia.setNota(nota);
+        evidencia.setRutaArchivo(ruta);
+        evidencia.setCreadoEn(LocalDateTime.now());
+
+        orden.setEstado(EstadoOrden.PENDIENTE_VERIFICACION);
+        ordenTrabajoRepository.save(orden);
+
+        Evidencia guardada = evidenciaRepository.save(evidencia);
+
+        auditoriaService.registrar(
+                "ORDEN",
+                orden.getId(),
+                "REGISTRAR_EVIDENCIA",
+                "Evidencia de campo registrada (" + tipo + "): " + (nota != null ? nota : "") + (ruta != null ? " [Archivo: " + ruta + "]" : "")
+        );
+
+        return guardada;
     }
 
     @Transactional
@@ -95,7 +153,21 @@ public class OrdenTrabajoService {
         orden.setEstado(EstadoOrden.PENDIENTE_VERIFICACION);
         ordenTrabajoRepository.save(orden);
 
-        return evidenciaRepository.save(evidencia);
+        Evidencia guardada = evidenciaRepository.save(evidencia);
+
+        auditoriaService.registrar(
+                "ORDEN",
+                orden.getId(),
+                "REGISTRAR_EVIDENCIA",
+                "Evidencia registrada (" + evidencia.getTipo() + "): " + (evidencia.getNota() != null ? evidencia.getNota() : "")
+        );
+
+        return guardada;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Evidencia> listarEvidencias(Long ordenId) {
+        return evidenciaRepository.findByOrdenId(ordenId);
     }
 
     @Transactional
@@ -111,6 +183,19 @@ public class OrdenTrabajoService {
         solicitudServicioRepository.save(solicitud);
 
         ordenTrabajoRepository.save(orden);
+
+        auditoriaService.registrar(
+                "ORDEN",
+                orden.getId(),
+                "COMPLETAR_ORDEN",
+                "Orden de trabajo completada y verificada administrativamente"
+        );
+        auditoriaService.registrar(
+                "SOLICITUD",
+                solicitud.getId(),
+                "COMPLETAR_SOLICITUD",
+                "Solicitud completada satisfactoriamente con orden #" + orden.getId()
+        );
     }
 
     @Transactional(readOnly = true)

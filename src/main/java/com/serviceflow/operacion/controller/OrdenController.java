@@ -54,6 +54,17 @@ public class OrdenController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping(value = "/{id}/evidencias/upload", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<EvidenciaResponse> subirEvidencia(
+            @PathVariable Long id,
+            @RequestParam("tipo") com.serviceflow.operacion.entity.TipoEvidencia tipo,
+            @RequestParam("nota") String nota,
+            @RequestParam(value = "archivo", required = false) org.springframework.web.multipart.MultipartFile archivo) {
+        
+        Evidencia creada = ordenTrabajoService.registrarEvidencia(id, tipo, nota, archivo);
+        return new ResponseEntity<>(mapEvidenciaToResponse(creada), HttpStatus.CREATED);
+    }
+
     @PostMapping("/{id}/evidencias")
     public ResponseEntity<EvidenciaResponse> agregarEvidencia(
             @PathVariable Long id,
@@ -66,6 +77,15 @@ public class OrdenController {
 
         Evidencia creada = ordenTrabajoService.agregarEvidencia(id, evidencia);
         return new ResponseEntity<>(mapEvidenciaToResponse(creada), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{id}/evidencias")
+    public ResponseEntity<List<EvidenciaResponse>> listarEvidencias(@PathVariable Long id) {
+        List<Evidencia> evidencias = ordenTrabajoService.listarEvidencias(id);
+        List<EvidenciaResponse> response = evidencias.stream()
+                .map(this::mapEvidenciaToResponse)
+                .toList();
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}/completar")

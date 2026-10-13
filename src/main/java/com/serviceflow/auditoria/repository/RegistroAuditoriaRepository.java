@@ -10,4 +10,8 @@ import java.util.List;
 public interface RegistroAuditoriaRepository extends JpaRepository<RegistroAuditoria, Long> {
     
     List<RegistroAuditoria> findByTipoEntidadAndEntidadId(String tipoEntidad, Long entidadId);
+
+    List<RegistroAuditoria> findByTipoEntidadAndEntidadIdOrderByCreadoEnDesc(String tipoEntidad, Long entidadId);
+
+    List<RegistroAuditoria> findAllByOrderByCreadoEnDesc();
 }

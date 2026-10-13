@@ -1,5 +1,6 @@
 package com.serviceflow.operacion.service;
 
+import com.serviceflow.auditoria.service.AuditoriaService;
 import com.serviceflow.catalogo.entity.CategoriaServicio;
 import com.serviceflow.catalogo.repository.CategoriaServicioRepository;
 import com.serviceflow.clientes.entity.Cliente;
@@ -13,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -23,6 +23,7 @@ public class SolicitudServicioService {
     private final SolicitudServicioRepository solicitudServicioRepository;
     private final ClienteRepository clienteRepository;
     private final CategoriaServicioRepository categoriaServicioRepository;
+    private final AuditoriaService auditoriaService;
 
     @Transactional(readOnly = true)
     public List<SolicitudServicio> obtenerTodas() {
@@ -47,7 +48,16 @@ public class SolicitudServicioService {
         solicitud.setCategoria(categoria);
         solicitud.setEstado(EstadoSolicitud.RECIBIDA);
         
-        return solicitudServicioRepository.save(solicitud);
+        SolicitudServicio guardada = solicitudServicioRepository.save(solicitud);
+        
+        auditoriaService.registrar(
+                "SOLICITUD", 
+                guardada.getId(), 
+                "CREAR_SOLICITUD", 
+                "Solicitud de servicio registrada para cliente: " + cliente.getNombre() + " (Categoría: " + categoria.getNombre() + ")"
+        );
+
+        return guardada;
     }
     
     @Transactional
@@ -59,7 +69,13 @@ public class SolicitudServicioService {
         }
         
         solicitud.setEstado(EstadoSolicitud.CANCELADA);
-        //Si tuvieramos campo para motivo de cancelación se agregaría aquí.
         solicitudServicioRepository.save(solicitud);
+
+        auditoriaService.registrar(
+                "SOLICITUD", 
+                solicitud.getId(), 
+                "CANCELAR_SOLICITUD", 
+                "Solicitud cancelada. Motivo: " + (motivo != null && !motivo.isBlank() ? motivo : "Sin motivo especificado")
+        );
     }
 }
