@@ -17,6 +17,11 @@ public class CategoriaServicioService {
     private final CategoriaServicioRepository categoriaServicioRepository;
 
     @Transactional(readOnly = true)
+    public List<CategoriaServicio> obtenerTodas() {
+        return categoriaServicioRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
     public List<CategoriaServicio> obtenerTodasActivas() {
         return categoriaServicioRepository.findByActivoTrue();
     }
@@ -34,5 +39,23 @@ public class CategoriaServicioService {
         }
         categoria.setActivo(true);
         return categoriaServicioRepository.save(categoria);
+    }
+
+    @Transactional
+    public CategoriaServicio actualizarCategoria(Long id, String nuevoNombre) {
+        CategoriaServicio categoria = obtenerPorId(id);
+        if (!categoria.getNombre().equalsIgnoreCase(nuevoNombre) && 
+            categoriaServicioRepository.findByNombre(nuevoNombre).isPresent()) {
+            throw new BusinessRuleException("Ya existe una categoría con el nombre: " + nuevoNombre);
+        }
+        categoria.setNombre(nuevoNombre);
+        return categoriaServicioRepository.save(categoria);
+    }
+
+    @Transactional
+    public void cambiarEstado(Long id, boolean activo) {
+        CategoriaServicio categoria = obtenerPorId(id);
+        categoria.setActivo(activo);
+        categoriaServicioRepository.save(categoria);
     }
 }

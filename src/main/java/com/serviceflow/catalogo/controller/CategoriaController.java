@@ -20,11 +20,14 @@ public class CategoriaController {
     private final CategoriaServicioService categoriaServicioService;
 
     @GetMapping
-    public ResponseEntity<List<CategoriaResponse>> obtenerTodasActivas() {
-        List<CategoriaResponse> categorias = categoriaServicioService.obtenerTodasActivas().stream()
+    public ResponseEntity<List<CategoriaResponse>> obtenerCategorias(@RequestParam(required = false, defaultValue = "false") boolean soloActivas) {
+        List<CategoriaServicio> categorias = soloActivas 
+                ? categoriaServicioService.obtenerTodasActivas() 
+                : categoriaServicioService.obtenerTodas();
+        List<CategoriaResponse> response = categorias.stream()
                 .map(this::mapToResponse)
                 .toList();
-        return ResponseEntity.ok(categorias);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
@@ -40,6 +43,24 @@ public class CategoriaController {
         
         CategoriaServicio creada = categoriaServicioService.crearCategoria(categoria);
         return new ResponseEntity<>(mapToResponse(creada), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CategoriaResponse> actualizarCategoria(
+            @PathVariable Long id,
+            @Valid @RequestBody CrearCategoriaRequest request) {
+        CategoriaServicio actualizada = categoriaServicioService.actualizarCategoria(id, request.nombre());
+        return ResponseEntity.ok(mapToResponse(actualizada));
+    }
+
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<Void> cambiarEstado(
+            @PathVariable Long id,
+            @RequestParam(required = false) Boolean activo,
+            @RequestBody(required = false) java.util.Map<String, Boolean> body) {
+        boolean nuevoEstado = activo != null ? activo : (body != null && body.containsKey("activo") ? body.get("activo") : true);
+        categoriaServicioService.cambiarEstado(id, nuevoEstado);
+        return ResponseEntity.noContent().build();
     }
 
     private CategoriaResponse mapToResponse(CategoriaServicio categoria) {

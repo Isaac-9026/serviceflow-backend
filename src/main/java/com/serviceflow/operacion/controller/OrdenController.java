@@ -94,6 +94,19 @@ public class OrdenController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{id}/cancelar")
+    public ResponseEntity<Void> cancelarOrden(
+            @PathVariable Long id,
+            @RequestParam(required = false) String motivo,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+        String motivoFinal = motivo;
+        if ((motivoFinal == null || motivoFinal.isBlank()) && body != null && body.containsKey("motivo")) {
+            motivoFinal = body.get("motivo");
+        }
+        ordenTrabajoService.cancelarOrden(id, motivoFinal);
+        return ResponseEntity.noContent().build();
+    }
+
     private OrdenResponse mapToResponse(OrdenTrabajo orden) {
         Long cotizacionId = orden.getCotizacion() != null ? orden.getCotizacion().getId() : null;
         UsuarioResponse tecnicoAsignado = ordenTrabajoService.obtenerTecnicoPrincipal(orden.getId())

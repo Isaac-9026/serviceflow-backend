@@ -75,6 +75,26 @@ public class CotizacionService {
         );
     }
 
+    @Transactional
+    public void rechazarCotizacion(Long cotizacionId, String motivo) {
+        Cotizacion cotizacion = cotizacionRepository.findById(cotizacionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cotización no encontrada con id: " + cotizacionId));
+
+        if (cotizacion.getEstado() != EstadoCotizacion.PENDIENTE) {
+            throw new BusinessRuleException("Solo se pueden rechazar cotizaciones en estado PENDIENTE.");
+        }
+
+        cotizacion.setEstado(EstadoCotizacion.RECHAZADA);
+        cotizacionRepository.save(cotizacion);
+
+        auditoriaService.registrar(
+                "COTIZACION", 
+                cotizacion.getId(), 
+                "RECHAZAR_COTIZACION", 
+                "Cotización #" + cotizacion.getId() + " rechazada. Motivo: " + (motivo != null && !motivo.isBlank() ? motivo : "Rechazada por el cliente")
+        );
+    }
+
     @Transactional(readOnly = true)
     public java.util.List<Cotizacion> listarCotizaciones() {
         return cotizacionRepository.findAll();

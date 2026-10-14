@@ -56,14 +56,20 @@ public class UsuarioController {
         usuarioActualizado.setEmail(request.email());
         usuarioActualizado.setNombre(request.nombre());
         usuarioActualizado.setApellido(request.apellido());
+        usuarioActualizado.setRol(request.rol());
 
         Usuario guardado = usuarioService.actualizarUsuario(id, usuarioActualizado);
         return ResponseEntity.ok(mapToResponse(guardado));
     }
 
     @PatchMapping("/{id}/estado")
-    public ResponseEntity<Void> cambiarEstado(@PathVariable Long id, @RequestParam boolean activo) {
-        usuarioService.cambiarEstado(id, activo);
+    public ResponseEntity<Void> cambiarEstado(
+            @PathVariable Long id, 
+            @RequestParam(required = false) Boolean activo,
+            @RequestBody(required = false) java.util.Map<String, Boolean> body) {
+        
+        boolean nuevoEstado = activo != null ? activo : (body != null && body.containsKey("activo") ? body.get("activo") : true);
+        usuarioService.cambiarEstado(id, nuevoEstado);
         return ResponseEntity.noContent().build();
     }
 

@@ -27,6 +27,20 @@ public class CotizacionConsultaController {
         return ResponseEntity.ok(response);
     }
 
+    @org.springframework.web.bind.annotation.PatchMapping("/{id}/aprobar")
+    public ResponseEntity<Void> aprobarCotizacion(@org.springframework.web.bind.annotation.PathVariable Long id) {
+        cotizacionService.aprobarCotizacion(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @org.springframework.web.bind.annotation.PatchMapping("/{id}/rechazar")
+    public ResponseEntity<Void> rechazarCotizacion(
+            @org.springframework.web.bind.annotation.PathVariable Long id,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String motivo) {
+        cotizacionService.rechazarCotizacion(id, motivo);
+        return ResponseEntity.noContent().build();
+    }
+
     private CotizacionResponse mapToResponse(Cotizacion cotizacion) {
         return new CotizacionResponse(
                 cotizacion.getId(),

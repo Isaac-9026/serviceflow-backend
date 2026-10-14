@@ -40,6 +40,16 @@ public class CotizacionController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{cotizacionId}/rechazar")
+    public ResponseEntity<Void> rechazarCotizacion(
+            @PathVariable Long solicitudId,
+            @PathVariable Long cotizacionId,
+            @RequestParam(required = false) String motivo) {
+        
+        cotizacionService.rechazarCotizacion(cotizacionId, motivo);
+        return ResponseEntity.noContent().build();
+    }
+
     private CotizacionResponse mapToResponse(Cotizacion cotizacion) {
         return new CotizacionResponse(
                 cotizacion.getId(),

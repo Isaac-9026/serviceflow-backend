@@ -12,5 +12,7 @@ public record ActualizarUsuarioRequest(
         String nombre,
 
         @NotBlank(message = "El apellido es obligatorio")
-        String apellido
+        String apellido,
+
+        com.serviceflow.identidad.entity.RolUsuario rol
 ) {}

@@ -198,6 +198,26 @@ public class OrdenTrabajoService {
         );
     }
 
+    @Transactional
+    public void cancelarOrden(Long ordenId, String motivo) {
+        OrdenTrabajo orden = ordenTrabajoRepository.findById(ordenId)
+                .orElseThrow(() -> new ResourceNotFoundException("Orden de trabajo no encontrada con id: " + ordenId));
+
+        if (orden.getEstado() == EstadoOrden.COMPLETADA) {
+            throw new BusinessRuleException("No se puede cancelar una orden que ya fue completada.");
+        }
+
+        orden.setEstado(EstadoOrden.CANCELADA);
+        ordenTrabajoRepository.save(orden);
+
+        auditoriaService.registrar(
+                "ORDEN",
+                orden.getId(),
+                "CANCELAR_ORDEN",
+                "Orden de trabajo cancelada. Motivo: " + (motivo != null && !motivo.isBlank() ? motivo : "Cancelada por coordinación")
+        );
+    }
+
     @Transactional(readOnly = true)
     public List<OrdenTrabajo> listarOrdenes() {
         return ordenTrabajoRepository.findAll();

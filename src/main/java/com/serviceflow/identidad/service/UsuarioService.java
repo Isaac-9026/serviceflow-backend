@@ -68,6 +68,16 @@ public class UsuarioService {
         usuario.setNombre(usuarioActualizado.getNombre());
         usuario.setApellido(usuarioActualizado.getApellido());
         usuario.setEmail(usuarioActualizado.getEmail());
+
+        if (usuarioActualizado.getRol() != null) {
+            usuario.setRol(usuarioActualizado.getRol());
+            if (usuarioActualizado.getRol() == RolUsuario.TECNICO && perfilTecnicoRepository.findByUsuarioId(usuario.getId()).isEmpty()) {
+                PerfilTecnico perfil = new PerfilTecnico();
+                perfil.setUsuario(usuario);
+                perfil.setEspecialidades("General");
+                perfilTecnicoRepository.save(perfil);
+            }
+        }
         
         return usuarioRepository.save(usuario);
     }
